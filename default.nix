@@ -1,18 +1,13 @@
-{ pkgs ? import <nixpkgs> {} }:
-let
-   stdenv = pkgs.stdenv;
-in stdenv.mkDerivation {
-  name = "criu-rpc";
-  src = "./";
-  buildInputs = with pkgs; [
-    cabal-install
-    ghc
-    stack
-    haskellPackages.ghc-mod
-    protobuf
+{ mkDerivation, base, criu-rpc-types, lens-family, network, process
+, proto-lens, stdenv, text, unix
+}:
+mkDerivation {
+  pname = "criu-rpc";
+  version = "0.0.0.1";
+  src = ./.;
+  libraryHaskellDepends = [
+    base criu-rpc-types lens-family network process proto-lens text
+    unix
   ];
-  installPhase = ''
-    mkdir -p $out
-    cp -r * $out/
-  '';
+  license = stdenv.lib.licenses.mit;
 }
