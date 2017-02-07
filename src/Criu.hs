@@ -29,13 +29,16 @@ module Criu (
 import Control.Exception.Base (IOException, bracket, try)
 import GHC.Int
 import Lens.Family2 ((.~))
-import Data.ProtoLens (build, decodeMessage, encodeMessage)
+import Data.ProtoLens.Message (build)
+import Data.ProtoLens.Encoding (decodeMessage, encodeMessage)
 import Proto.Criu.Rpc
 import Network.Socket (Family(AF_UNIX), SocketType(SeqPacket), SockAddr(SockAddrUnix), close, connect, socket)
 import Network.Socket.ByteString (recv, send)
 import System.Posix.IO
 import System.Posix.Types
 
+
+--------------------------------------------------------------------------------
 {- $requests
 The simplest example of a call to CRIU is a __/check/__ request. For convenience
 this module re-exports some libraries used for building 'Criu_req's.
@@ -87,7 +90,7 @@ callCriu' fp req = do
     Left (e :: IOException) -> pure . Left . show $ e
 
 
--- | Send request to a criu service. Takes a filepath to the criu service
+-- | Send a request to a criu service. Takes a filepath to the criu service
 -- socket and a criu request. Returns an `Either` of the response or a
 -- `String` representing an error if there is an issue decoding the
 -- response from the criu service.
@@ -104,13 +107,9 @@ callCriu fp req = do
     (close)
     (\sock -> f sock)
 
-
--- | Build some options.
-criuOpts :: Int32 -> Int32 -> Criu_opts
-criuOpts procId dirFd =
-  build ((imagesDirFd .~ dirFd) . (pid .~ procId) . (shellJob .~ True))
+--------------------------------------------------------------------------------
 {- $requestbuilders
-To build 'Criu_req''s you will need '.~' from "Lens.Family2", 'build' from
+To build 'Criu_req''s you will need '.~' from "Lens.Family2", 'Data.ProtoLens.Message.build' from
 "Data.ProtoLens" and of course the lenses and types from "Proto.Criu.Rpc".
 
 Above we saw a simple /check/ request, the next example is a /dump/ request. This one is
@@ -162,6 +161,7 @@ dumpRequest options = build ((type' .~ DUMP) . (opts .~ options))
 dumpRequestOpts :: Fd -> Int32 -> Criu_opts
 dumpRequestOpts fd procId =
   build ((imagesDirFd .~ (fromIntegral fd)) . (pid .~ procId))
+
 
 -- | Open a directory, returning its file descriptor.
 -- Caution - make sure to close the file descriptor! Can use 'closeDirFd'.
